@@ -1,19 +1,55 @@
 name: Android CI
 
-on: [push, pull_request]
+on:
+  workflow_dispatch:
+  pull_request:
+    paths-ignore:
+      - '**/.md'
+      - '**/.mp4'
+      - 'LICENSE'
+      - '.gitignore'
+      - 'jitpack.yml'
+      - 'docs/**'
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - '**/.md'
+      - '**/.mp4'
+      - 'LICENSE'
+      - '.gitignore'
+      - 'jitpack.yml'
+      - 'docs/**'
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
-
+    runs-on: macos-latest
+    env:
+      JAVA_VERSION: 17
+      JAVA_DISTRO: 'temurin'
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
       - name: set up JDK 1.17
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v4
         with:
-          java-version: 1.17
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRO }}
+      
+      - name: Set up gradle
+        uses: gradle/actions/setup-gradle@v4
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
+
       - name: Build with Gradle
-        run: ./gradlew :sample:assembleDebug && ./gradlew :markdowntext:publishToMavenLocal
+        run: ./gradlew :sample:assembleRelease && ./gradlew :markdowntext:publishToMavenLocal
+      
+      # - name: Upload APK
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: apk-release-${{ github.run_number }}
+      #     path: sample/build/outputs/apk/release/app-release.apk
